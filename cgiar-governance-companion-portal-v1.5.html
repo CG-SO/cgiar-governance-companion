@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CGIAR Governance Companion</title>
+
+<!-- ===== PWA: installable on Mac / Windows desktop (Chrome, Edge) and iOS / Android (Safari, Chrome) ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#033529">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<!-- iOS Safari doesn't read the manifest for icon/standalone behavior — these tags are required separately -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gov Companion">
+<!-- Android/Chrome equivalent of the above -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+  :root{
+    /* CGIAR brand palette (from Governance PPT template): deep green + mint accent + coral highlight */
+    --navy:#033529; --navy2:#065F4A; --gold:#17F1BD; --bg:#f4f7f5;
+    --card:#ffffff; --text:#101915; --muted:#5f746e; --border:#dde6e2;
+    --good:#178a5e; --pending:#F26B43; --green:#0b4a35;
+  }
+  *{box-sizing:border-box;}
+  .hidden{display:none!important;}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);}
+  .app{min-height:100vh;}
+  .main{width:min(100%,1150px);margin:0 auto;padding:32px 40px;}
+  @media (max-width:850px){.main{padding:24px 20px;}}
+  .page{display:none;}
+  .page.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  h2.page-title{font-size:24px;margin:0 0 4px;color:var(--navy);}
+  .subtitle{color:var(--muted);font-size:14px;margin:0 0 20px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:16px;}
+  .transition-banner{background:#fdeee9;border:1px solid #f0b39c;border-radius:10px;padding:16px 20px;margin-bottom:22px;font-size:13.5px;line-height:1.6;}
+  .transition-banner b{color:#a8431e;}
+  .transition-banner .tag{display:inline-block;background:#a8431e;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;margin-right:8px;letter-spacing:.5px;}
+  .transition-details{background:#fdeee9;border:1px solid #f0b39c;border-radius:10px;margin-bottom:16px;overflow:hidden;}
+  .transition-details summary{padding:14px 20px;cursor:pointer;font-weight:700;color:#a8431e;font-size:13.5px;list-style:none;display:flex;align-items:center;gap:8px;}
+  .transition-details summary::-webkit-details-marker{display:none;}
+  .transition-details summary::before{content:'\25B6';font-size:9px;transition:transform .2s ease;display:inline-block;}
+  .transition-details[open] summary::before{transform:rotate(90deg);}
+  .transition-details .transition-body{padding:0 20px 16px;font-size:13.5px;line-height:1.6;color:var(--text);}
+  .transition-details .transition-body b{color:#a8431e;}
+  .dash-cta-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .dash-cta-row .info{font-size:13px;color:var(--muted);}
+  .dash-cta-row .info strong{color:var(--navy);}
+  .quick-links-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
+  .quick-link-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;cursor:pointer;transition:.15s;}
+  .quick-link-card:hover{border-color:var(--navy2);box-shadow:0 2px 8px rgba(3,53,41,.08);}
+  .quick-link-card .qtitle{font-weight:700;font-size:13.5px;color:var(--navy);margin-bottom:4px;}
+  .quick-link-card .qdesc{font-size:12px;color:var(--muted);}
+  .module-row{display:flex;align-items:center;justify-content:space-between;padding:13px 10px;margin:0 -10px;border-radius:8px;border-bottom:1px solid var(--border);transition:transform .15s ease, box-shadow .15s ease, background-color .15s ease;}
+  .module-row:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(3,53,41,.07);background:#fafcfb;}
+  .module-row:last-child{border-bottom:none;}
+  .module-name{font-weight:600;font-size:14px;}
+  .module-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;}
+  .badge.done{background:#e1f7ef;color:var(--good);}
+  .badge.pending{background:#fdeae4;color:#a8431e;}
+  .badge.progress{background:#e6f1ed;color:var(--navy2);}
+  .wt-layout{display:grid;grid-template-columns:270px 1fr;gap:24px;}
+  .wt-steps{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;height:fit-content;}
+  .wt-step{padding:11px 14px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:10px;}
+  .wt-step:hover{background:#f2f4f8;}
+  .wt-step.active{background:var(--navy);color:#fff;font-weight:600;}
+  .wt-step .chk{width:16px;height:16px;border-radius:50%;border:2px solid #c3cad4;flex-shrink:0;}
+  .wt-step.active .chk{border-color:var(--gold);}
+  .wt-step.complete .chk{background:var(--good);border-color:var(--good);}
+  .wt-content h3{color:var(--navy);margin-top:0;}
+  .wt-content h4{color:var(--navy);margin:16px 0 6px;font-size:13.5px;}
+  .wt-content h4:first-of-type{margin-top:10px;}
+  .wt-content p{line-height:1.6;color:#333;font-size:14px;}
+  .wt-content ul{line-height:1.75;font-size:14px;color:#333;padding-left:20px;}
+  .wt-content a{color:var(--navy2);}
+  .wt-related-docs{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .wt-related-docs h4{margin:0 0 8px;font-size:12px;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;}
+  .wt-related-docs ul{margin:0;padding-left:18px;font-size:13px;line-height:1.85;}
+  .wt-related-docs a{color:var(--navy2);}
+  .wt-related-docs .pill{margin-left:6px;}
+  .doclink{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px;gap:10px;}
+  .doclink:last-child{border-bottom:none;}
+  .doclink a{color:var(--navy2);text-decoration:none;font-weight:600;}
+  .doclink a:hover{text-decoration:underline;}
+  .doclink .note{font-size:11.5px;color:var(--muted);}
+  .pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .pill.pending{background:#fdeae4;color:#a8431e;}
+  .pill.attach{background:#e6f1ed;color:var(--navy2);}
+  .wt-nav{display:flex;justify-content:space-between;margin-top:20px;}
+  button{font-family:inherit;}
+  .btn{background:var(--navy);color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13.5px;font-weight:600;}
+  .btn:hover{background:var(--navy2);}
+  .btn.secondary{background:#fff;color:var(--navy);border:1px solid var(--border);}
+  .btn.secondary:hover{background:#f2f4f8;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .chat-shell{background:var(--card);border:1px solid var(--border);border-radius:10px;height:520px;display:flex;flex-direction:column;overflow:hidden;}
+  /* Chat widget (Ask AI tab + floating bubble) uses Arial per the PPT governance template's body
+     font, rather than the Segoe UI used everywhere else on this site — and runs 1px smaller. */
+  .chat-shell, .fab-panel-header, .fab-panel-body, #webchat{font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;}
+  .chat-header{background:var(--navy);color:#fff;padding:14px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;}
+  .chat-header .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulseDot 2s infinite;}
+  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:6px;vertical-align:middle;animation:pulseDot 2s infinite;}
+  @keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(23,241,189,.55);}70%{box-shadow:0 0 0 6px rgba(23,241,189,0);}100%{box-shadow:0 0 0 0 rgba(23,241,189,0);}}
+  @media (prefers-reduced-motion: reduce){.chat-header .dot,.live-dot{animation:none;}}
+  .typing-dots{display:inline-flex;gap:6px;align-items:center;padding:2px 2px;}
+  .typing-dots span{width:7px;height:7px;border-radius:50%;background:var(--border);animation:typingCountdown 1.5s infinite ease-in-out;}
+  .typing-dots span:nth-child(1){animation-delay:0s;}
+  .typing-dots span:nth-child(2){animation-delay:.5s;}
+  .typing-dots span:nth-child(3){animation-delay:1s;}
+  @keyframes typingCountdown{0%{background:var(--navy2);transform:scale(1.3);}28%{background:var(--border);transform:scale(1);}100%{background:var(--border);transform:scale(1);}}
+  @media (prefers-reduced-motion: reduce){.typing-dots span{animation:none;background:var(--navy2);}}
+  .toast{position:fixed;bottom:24px;left:24px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:8px;font-size:13.5px;font-weight:600;box-shadow:0 6px 20px rgba(3,53,41,.28);opacity:0;transform:translateY(12px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;z-index:999;display:flex;align-items:center;gap:8px;max-width:320px;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast .check{width:18px;height:18px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;}
+  .fab-btn{position:fixed;right:28px;bottom:28px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(3,53,41,.35);z-index:998;transition:transform .15s ease, box-shadow .15s ease;font-size:22px;}
+  .fab-btn:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(3,53,41,.4);}
+  .fab-btn.hidden{display:none;}
+  .fab-dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:var(--gold);animation:pulseDot 2s infinite;}
+  .fab-panel{position:fixed;right:28px;bottom:94px;width:340px;max-width:calc(100vw - 40px);background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 16px 40px rgba(3,53,41,.25);overflow:hidden;z-index:998;display:flex;flex-direction:column;max-height:min(460px, 75vh);opacity:0;transform:translateY(16px) scale(.97);pointer-events:none;transition:opacity .2s ease, transform .2s ease;}
+  .fab-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+  .fab-panel-header{background:var(--navy);color:#fff;padding:12px 14px;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .fab-panel-header .title{display:flex;align-items:center;}
+  .fab-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;padding:0 2px;}
+  .fab-panel-body{flex:1;overflow:auto;display:flex;flex-direction:column;min-height:0;}
+  /* the moved-in chat surface (mock chat-shell, SDK #webchat, or the iframe fallback) is sized
+     for the full Ask AI page by default — shrink it to fit the corner bubble, and drop its own
+     header since the fab-panel-header above already shows a title and close button. */
+  #fab-slot .chat-shell{height:400px;border-radius:0;}
+  #fab-slot #webchat{height:400px!important;border-radius:0!important;}
+  #fab-slot iframe{height:400px!important;}
+  #fab-slot .chat-header{display:none;}
+  @media (prefers-reduced-motion: reduce){.fab-dot{animation:none;}}
+  .chat-body{flex:1;padding:18px;overflow-y:auto;background:#fafbfc;}
+  .msg{max-width:78%;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:12.5px;line-height:1.55;}
+  .msg.bot{background:#e6f1ed;color:#101915;border-top-left-radius:2px;}
+  .msg.user{background:var(--navy);color:#fff;margin-left:auto;border-top-right-radius:2px;}
+  .msg .src{display:block;font-size:10px;color:var(--muted);margin-top:6px;}
+  .msg .src a{color:var(--navy2);}
+  .chat-input{display:flex;border-top:1px solid var(--border);padding:10px;gap:8px;}
+  .chat-input input{flex:1;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;font-family:inherit;}
+  .chat-input button{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:0 18px;cursor:pointer;font-weight:600;font-family:inherit;}
+  .notice{background:#fdeee9;border:1px solid #f0b39c;color:#a8431e;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-bottom:14px;}
+  .suggest-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .chip{background:#e6f1ed;border:1px solid var(--border);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;color:var(--navy2);}
+  .chip:hover{background:#d9ebe3;}
+  .search-bar{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:18px;}
+  .cat-title{font-size:14px;font-weight:700;color:var(--navy);margin:22px 0 4px;}
+  .cat-title:first-child{margin-top:0;}
+  .cat-sub{font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .doc-pane{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+  .doc-pane-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none;}
+  .doc-pane-header:hover{background:#f6faf8;}
+  .doc-pane-header .htitle{display:flex;align-items:center;gap:10px;}
+  .doc-pane-header .chevron{display:inline-block;transition:transform .28s cubic-bezier(.16,1,.3,1);color:var(--navy2);font-size:12px;}
+  .doc-pane{transition:box-shadow .15s ease, transform .15s ease;}
+  .doc-pane:hover{box-shadow:0 3px 12px rgba(3,53,41,.07);transform:translateY(-1px);}
+  .doc-pane.open .doc-pane-header .chevron{transform:rotate(90deg);}
+  .doc-pane-header .cat-name{font-size:14.5px;font-weight:700;color:var(--navy);}
+  .doc-pane-header .count-pill{font-size:11px;font-weight:600;background:#e6f1ed;color:var(--navy2);padding:3px 10px;border-radius:20px;}
+  .doc-pane-body{max-height:0;overflow:hidden;padding:0 20px;}
+  .doc-pane.open .doc-pane-body{max-height:2000px;padding:0 20px 14px;}
+  .dir-group-title{font-size:13.5px;font-weight:700;color:var(--navy);margin:22px 0 10px;text-transform:uppercase;letter-spacing:.5px;}
+  .dir-group-title:first-child{margin-top:0;}
+  .dir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .person-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:transform .15s ease, box-shadow .15s ease;}
+  .person-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(3,53,41,.10);}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:8px;font-size:12.5px;}
+  .person-card h4{margin:0 0 2px;font-size:13.5px;}
+  .person-card .role{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
+  .person-card .em{font-size:11.5px;color:var(--navy2);}
+  .contact-tip{background:#e6f1ed;border-radius:8px;padding:12px 16px;font-size:13px;margin-bottom:18px;}
+  .update-row{display:flex;gap:14px;padding:13px 6px;margin:0 -6px;border-radius:8px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;cursor:pointer;transition:background-color .15s ease;}
+  .update-row:hover{background:#f2f7f5;}
+  .update-date{flex-shrink:0;width:82px;font-size:11px;font-weight:700;color:var(--navy2);background:#e6f1ed;border-radius:6px;padding:5px 8px;height:fit-content;text-align:center;}
+  .update-row.pending .update-date{background:#fdeae4;color:#a8431e;}
+  .update-title{font-weight:600;font-size:13.5px;margin-bottom:2px;}
+  .update-desc{font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .updates-viewport{position:relative;margin-top:8px;min-height:82px;}
+  .updates-viewport .update-row{animation:updateFadeIn .25s ease;}
+  @keyframes updateFadeIn{from{opacity:0;}to{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){.updates-viewport .update-row{animation:none;}}
+  .upd-ctrl-btn{background:#e6f1ed;border:1px solid var(--border);color:var(--navy2);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;}
+  .upd-ctrl-btn:hover{background:#d9ebe3;}
+  .meetings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px;}
+  .meetings-col-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--gold);}
+  .meeting-block{margin-bottom:10px;}
+  .meeting-block:last-child{margin-bottom:0;}
+  .meeting-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+  .meeting-link{display:block;text-decoration:none;color:inherit;padding:8px 10px;margin:0 -10px;border-radius:8px;transition:background-color .15s ease;cursor:pointer;}
+  .meeting-link:hover{background:#f2f7f5;}
+  .meeting-name{font-size:13px;font-weight:600;color:var(--navy2);}
+  .meeting-meta{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  @media (max-width:720px){.meetings-grid{grid-template-columns:1fr;}}
+  /* Meetings & Decisions page — larger type than the shared .meeting-* classes use elsewhere
+     (e.g. the Diligent Platform page), scoped to this page only so other pages are unaffected. */
+  #page-meetings .section-label{font-size:16px;font-weight:700;color:var(--navy);margin:26px 0 12px;}
+  #page-meetings .section-label:first-of-type{margin-top:4px;}
+  #page-meetings .meetings-col-title{font-size:14px;}
+  #page-meetings .meeting-name{font-size:15.5px;}
+  #page-meetings .meeting-meta{font-size:12.5px;}
+  #page-meetings .meeting-label{font-size:12px;}
+  #page-meetings .meeting-block{margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <h2 class="page-title">Governance Companion</h2>
+      <p class="subtitle">Your onboarding and reference home for CGIAR governance — built for new and long-standing Board and Council members alike.</p>
+
+      <div class="card" style="display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;">
+        <div style="flex:1;min-width:220px;">
+          <strong style="font-size:14px;color:var(--navy);">New to CGIAR governance?</strong>
+          <p style="font-size:12.5px;color:var(--muted);margin:4px 0 10px;line-height:1.5;">Start with the optional Guided Walkthrough — a self-paced tour of governance structure, committees, and policies. Nothing here is mandatory.</p>
+          <button class="btn secondary" onclick="goToPage('walkthrough')">Start Guided Walkthrough &rarr;</button>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <strong style="font-size:14px;color:var(--navy);">Already know CGIAR governance?</strong>
+          <p style="font-size:12.5px;color:var(--muted);margin:4px 0 10px;line-height:1.5;">Jump straight to what you need — meetings and decisions, documents, contacts, or ask the AI directly.</p>
+          <button class="btn secondary" onclick="goToPage('archive')">Browse Document Index &rarr;</button>
+        </div>
+      </div>
+
+      <details class="transition-details">
+        <summary>Governance transition &mdash; effective 15 June 2026</summary>
+        <div class="transition-body">
+          <b>Effective 15 June 2026</b> &mdash; the CGIAR Board (formerly the Integrated Partnership Board / IPB) replaces the prior structure. The <b>CGIAR Council</b> replaces the System Council. The <b>CGIAR Office</b> replaces the System Management Office. The <b>General Assembly of Centers is dissolved</b>. The Board now comprises <b>19 members</b>: 12 Center Board Chairs (ex officio, voting), 6 Independent Members incl. the Board Chair and AFRC Chair (voting), and the Executive Managing Director (non-voting). The Nominations Committee has moved to the Board. Documents marked <b>UPDATE PENDING</b> will be shared once approved &mdash; current versions remain valid until superseded.
+        </div>
+      </details>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <strong style="font-size:14px;color:var(--navy);">Latest updates</strong>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="upd-ctrl-btn" id="upd-prev" onclick="updatesPrev()" title="Previous update" aria-label="Previous update">&#8249;</button>
+            <button class="upd-ctrl-btn" id="upd-playpause" onclick="toggleUpdatesPlay()" title="Pause updates" aria-label="Pause updates">&#10074;&#10074;</button>
+            <button class="upd-ctrl-btn" id="upd-next" onclick="updatesNext()" title="Next update" aria-label="Next update">&#8250;</button>
+          </div>
+        </div>
+        <div class="updates-viewport">
+          <div id="updates-track" aria-live="polite"></div>
+        </div>
+        <div id="updates-pos" style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px;"></div>
+      </div>
+
+      <div class="doc-pane" id="modules-pane">
+        <div class="doc-pane-header" onclick="toggleModulesPane()">
+          <div class="htitle"><span class="chevron">&#9654;</span><span class="cat-name">Guided Walkthrough topics</span></div>
+          <span id="modules-pane-summary" style="font-size:12px;color:var(--muted);"></span>
+        </div>
+        <div class="doc-pane-body"><div id="module-list" style="padding-top:6px;"></div></div>
+      </div>
+
+      <div class="card" id="help-card">
+        <strong style="font-size:14px;color:var(--navy);">Need help?</strong>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 0;">Board members: contact <a href="mailto:cgiar-board-secretariat@cgiar.org" style="color:var(--navy2);">cgiar-board-secretariat@cgiar.org</a>. Council members may also contact <a href="mailto:cgiar-council-secretariat@cgiar.org" style="color:var(--navy2);">cgiar-council-secretariat@cgiar.org</a>.</p>
+      </div>
+
+      <div class="doc-pane" id="pending-pane">
+        <div class="doc-pane-header" onclick="togglePendingPane()">
+          <div class="htitle"><span class="chevron">&#9654;</span><span class="cat-name">Documents update pending</span></div>
+          <span class="count-pill" id="pending-pane-count"></span>
+        </div>
+        <div class="doc-pane-body"><div id="pending-widget" style="padding-top:6px;"></div></div>
+      </div>
+    </div>
+
+    <!-- MEETINGS & DECISIONS -->
+    <div class="page" id="page-meetings">
+      <h2 class="page-title">Meetings & Decisions</h2>
+      <p class="subtitle">Board and Council meetings and decisions — visible to everyone, regardless of your role.</p>
+
+      <div class="section-label">Meetings</div>
+      <div class="meetings-grid">
+        <div class="card">
+          <div class="meetings-col-title">CGIAR Board</div>
+          <div class="meeting-block">
+            <div class="meeting-label">Last meeting</div>
+            <a class="meeting-link" href="https://www.cgiar.org/meeting-document/1st-cgiar-board-meeting" target="_blank" rel="noopener">
+              <div class="meeting-name">1st CGIAR Board Meeting</div>
+              <div class="meeting-meta">30 Jul 2026 &middot; Virtual &middot; Voting Members only</div>
+            </a>
+          </div>
+          <div class="meeting-block">
+            <div class="meeting-label">Next meeting</div>
+            <a class="meeting-link" href="https://www.cgiar.org/meeting-document/2nd-cgiar-board-meeting" target="_blank" rel="noopener">
+              <div class="meeting-name">2nd CGIAR Board Meeting</div>
+              <div class="meeting-meta">23&ndash;25 Sep 2026 &middot; Ibadan, Nigeria &middot; Agenda to be published closer to the date</div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="meetings-col-title">CGIAR Council</div>
+          <div class="meeting-block">
+            <div class="meeting-label">Last meeting</div>
+            <a class="meeting-link" href="https://www.cgiar.org/meeting-document/24th-cgiar-system-council-meeting" target="_blank" rel="noopener">
+              <div class="meeting-name">24th CGIAR System Council Meeting</div>
+              <div class="meeting-meta">10&ndash;11 Jun 2026 &middot; Antalya, T&uuml;rkiye</div>
+            </a>
+          </div>
+          <div class="meeting-block">
+            <div class="meeting-label">Next meeting</div>
+            <a class="meeting-link" href="https://www.cgiar.org/governance?f%5B0%5D=governance_type%3ACGIAR%20Council" target="_blank" rel="noopener">
+              <div class="meeting-name">Not yet announced</div>
+              <div class="meeting-meta">Check Council Meetings &amp; Documents for the latest schedule</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Decisions</div>
+      <div class="meetings-grid">
+        <div class="card">
+          <div class="meetings-col-title">CGIAR Board</div>
+          <div class="meeting-block">
+            <a class="meeting-link" href="https://www.cgiar.org/cgiar-board#Decision+Register" target="_blank" rel="noopener">
+              <div class="meeting-name">Board Decision Register &rarr;</div>
+              <div class="meeting-meta">Decisions are tracked live on cgiar.org &mdash; always check the current register rather than a snapshot here.</div>
+            </a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="meetings-col-title">CGIAR Council</div>
+          <div class="meeting-block">
+            <a class="meeting-link" href="https://www.cgiar.org/cgiar-council#Decision+Register" target="_blank" rel="noopener">
+              <div class="meeting-name">Council Decision Register &rarr;</div>
+              <div class="meeting-meta">Decisions are tracked live on cgiar.org &mdash; always check the current register rather than a snapshot here.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALKTHROUGH -->
+    <div class="page" id="page-walkthrough">
+      <h2 class="page-title">Guided Walkthrough</h2>
+      <p class="subtitle">Nine modules mirroring the Governance Companion's knowledge base sections.</p>
+
+      <div class="card" id="role-gate">
+        <h3 style="margin:0 0 6px;color:var(--navy);font-size:16px;">Which role are you joining as?</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">This tailors the walkthrough to your role — you can change it anytime.</p>
+        <div style="display:flex;gap:12px;">
+          <button class="btn" style="flex:1;padding:16px;font-size:14px;" onclick="chooseRole('board')">I'm a Board Member</button>
+          <button class="btn secondary" style="flex:1;padding:16px;font-size:14px;" onclick="chooseRole('council')">I'm a Council Member</button>
+        </div>
+      </div>
+
+      <div id="wt-role-badge" class="hidden" style="margin-bottom:14px;font-size:12.5px;color:var(--muted);">
+        Track: <strong id="wt-role-label"></strong> &middot; <a href="#" onclick="resetRole();return false;" style="color:var(--navy2);">change</a>
+      </div>
+
+      <div class="wt-layout hidden" id="wt-layout">
+        <div class="wt-steps" id="wt-steps"></div>
+        <div>
+          <div class="card wt-content" id="wt-content"></div>
+          <div class="wt-nav">
+            <button class="btn secondary" id="wt-prev">&larr; Previous</button>
+            <button class="btn" id="wt-next">Mark complete & continue &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden" id="wt-reference-section" style="margin-top:24px;">
+        <h3 style="font-size:15px;color:var(--navy);margin:0 0 4px;">Reference library</h3>
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 14px;">Optional deeper reading — browse in any order, whenever you need it. Nothing here needs to be "completed."</p>
+        <div id="wt-reference-list"></div>
+      </div>
+    </div>
+
+    <!-- DILIGENT PLATFORM -->
+    <div class="page" id="page-diligent">
+      <svg viewBox="0 0 190 40" style="height:26px;width:auto;margin-bottom:10px;display:block;" aria-label="Diligent">
+        <text x="0" y="29" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="28" letter-spacing="-0.5" fill="#D6293E">Diligent</text>
+      </svg>
+      <h2 class="page-title">Diligent Platform</h2>
+      <p class="subtitle">A quick guide to the Diligent board portal — what it is, how to use it, and where to get help.</p>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">What is Diligent?</strong>
+        <p style="font-size:13px;line-height:1.6;margin:8px 0 0;">Diligent is the platform we use for issuing Board documents — board books, agendas, minutes, and comments on the books all live in one place.</p>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">What the platform does for you</strong>
+        <ul style="margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.7;">
+          <li><strong>Board books &amp; materials</strong> — agendas, papers and minutes in one place, available online and offline.</li>
+          <li><strong>Comments on board books</strong> — annotate and discuss materials directly within a document.</li>
+          <li><strong>Mobile &amp; offline access</strong> — review materials on phone or tablet, even without an internet connection.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">How to use it</strong>
+        <ol style="margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.8;">
+          <li>Go to <a href="https://director.diligentboards.com" target="_blank" rel="noopener"><strong>director.diligentboards.com</strong></a> — this is the Board's direct sign-in page, not Diligent's general product site.</li>
+          <li>Sign in with the credentials provided by the Board Secretariat when your account was set up. If you don't have an account yet, contact the Secretariat.</li>
+          <li>Your current board book and meeting materials appear on the home screen — open a meeting to see its agenda and papers.</li>
+          <li>Use in-book search to jump straight to a specific paper or section instead of scrolling.</li>
+          <li>Use comments to annotate or flag specific pages within a board book.</li>
+          <li>Before travelling, download materials for offline reading via the Diligent Boards mobile app.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">Installing the mobile app</strong>
+        <p style="font-size:13px;line-height:1.7;margin:8px 0 0;">On your phone or tablet, open the <strong>App Store</strong> (iOS) or <strong>Google Play</strong> (Android) and search for <strong>"Diligent Boards"</strong>. Install the app, then sign in with the same credentials provided by the Secretariat. Once signed in, your board books sync automatically and can be downloaded for offline reading before you travel.</p>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">Login link</strong>
+        <div class="meeting-block">
+          <a class="meeting-link" href="https://director.diligentboards.com" target="_blank" rel="noopener">
+            <div class="meeting-name">Diligent Boards Sign-in &rarr;</div>
+            <div class="meeting-meta">Sign in directly with the credentials provided by the Board Secretariat.</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:14px;color:var(--navy);">Getting help</strong>
+        <p style="font-size:13px;line-height:1.7;margin:8px 0 0;">Start with the Secretariat — for account setup, password resets, access issues, or any question about using Diligent:</p>
+        <ul style="margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.8;">
+          <li>Board Secretariat: <a href="mailto:cgiar-board-secretariat@cgiar.org">cgiar-board-secretariat@cgiar.org</a></li>
+          <li>Council Secretariat: <a href="mailto:cgiar-council-secretariat@cgiar.org">cgiar-council-secretariat@cgiar.org</a></li>
+        </ul>
+        <p style="font-size:13px;line-height:1.7;margin:8px 0 0;">The Secretariat will resolve most issues directly, and will escalate to Diligent's support team on your behalf if needed — please don't contact Diligent support directly.</p>
+        <p style="font-size:11.5px;color:var(--muted);margin:8px 0 0;">Self-service: <a href="https://status.diligent.com/" target="_blank" rel="noopener">Diligent system status page</a> — check for any service outages before reporting an issue.</p>
+      </div>
+
+      <p style="font-size:11px;color:var(--muted);margin-top:4px;">For any Diligent account setup, access, or usage issue, contact the Board Secretariat first — they will loop in Diligent support if needed.</p>
+    </div>
+
+    <!-- ASK AI -->
+    <div class="page" id="page-ask">
+      <h2 class="page-title">Ask AI</h2>
+      <p class="subtitle">Grounded answers from the CGIAR governance document set on cgiar.org and CGSpace.</p>
+      <div class="notice" id="ask-notice">Placeholder panel. Paste your Copilot Studio "Tokens endpoint" URL near the top of the &lt;script&gt; block (TOKEN_ENDPOINT_URL) to swap this mock chat for your live agent, styled to match this site — no hosting required, it works straight from this local file.</div>
+      <div class="suggest-row" id="suggest-row">
+        <div class="chip" onclick="askSample(0)">What changed in the governance transition?</div>
+        <div class="chip" onclick="askSample(1)">What does the AFRC do?</div>
+        <div class="chip" onclick="askSample(2)">Who do I contact about travel & expenses?</div>
+        <div class="chip" onclick="askSample(3)">Where do I find CGIAR's financial reports?</div>
+        <div class="chip" onclick="askSample(4)">Who is the Council Secretary?</div>
+      </div>
+      <div id="ask-chat-home">
+        <div class="chat-shell" id="chat-shell">
+          <div class="chat-header"><span class="dot"></span> Connected to: CGIAR Governance Companion Knowledge Base (mock)</div>
+          <div class="chat-body" id="chat-body">
+            <div class="msg bot">Hello! I can answer questions about CGIAR's governing documents, Board and Council committees, policies and ethics, strategy, reports, oversight bodies, and practical resources. Try a suggestion above or ask your own question.</div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Ask a question about CGIAR governance..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT INDEX -->
+    <div class="page" id="page-archive">
+      <h2 class="page-title">Document Index</h2>
+      <p class="subtitle">Every document the Companion is expected to reference, grouped exactly as in the source framework, linking to the live page on cgiar.org or CGSpace.</p>
+      <input class="search-bar" id="doc-search" placeholder="Search documents (e.g. 'travel', 'ethics', 'AFRC')..." oninput="renderDocs()">
+      <div id="doc-list"></div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="page" id="page-directory">
+      <h2 class="page-title">Contacts</h2>
+      <p class="subtitle">Secretariat, leadership, committee chairs, and mailing lists.</p>
+      <div class="contact-tip">These are the Secretariat email addresses to contact for any governance question — both Board and Council members can reach out directly. <strong>Board members:</strong> <a href="mailto:cgiar-board-secretariat@cgiar.org">cgiar-board-secretariat@cgiar.org</a> (Board Secretariat). <strong>Council members:</strong> <a href="mailto:cgiar-council-secretariat@cgiar.org">cgiar-council-secretariat@cgiar.org</a> (Council Secretariat).</div>
+      <input class="search-bar" id="dir-search" placeholder="Search by name, role, or email..." oninput="renderDirectory()">
+      <div id="dir-groups"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Floating "Ask AI" bubble — visible on every page except Ask AI itself. Rather than running a
+     second, independent chat connection, this relocates the very same chat-shell / live agent
+     node between its home on the Ask AI page and this floating panel, so there's only ever one
+     live conversation, wherever it currently lives. -->
+<div class="fab-btn" id="fab-btn" onclick="toggleFab()" title="Ask CGIAR Governance Companion">
+  <span class="fab-dot"></span>
+  <span>&#128172;</span>
+</div>
+<div class="fab-panel" id="fab-panel">
+  <div class="fab-panel-header">
+    <span class="title"><span class="live-dot"></span>Ask AI</span>
+    <button class="fab-close" onclick="toggleFab()" aria-label="Close">&times;</button>
+  </div>
+  <div class="fab-panel-body" id="fab-slot"></div>
+</div>
+
+
+<!-- Bot Framework Web Chat SDK — loads the chat as a styleable in-page widget instead of an
+     iframe, so it can be re-themed to match this site and driven by our own JS (needed for the
+     suggested-question chips to actually send messages into the conversation). -->
+<script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+
+<script>
+// ================= LIVE AGENT CONNECTION =================
+// Switched from the simple <iframe> embed to the Web Chat SDK above, because an iframe is a
+// separate document — you can't restyle what's inside it with this page's CSS, and you can't
+// send messages into it from buttons on this page (both were the two problems you ran into).
+// The SDK loads the chat directly into a <div> on this page instead, so both become possible.
+//
+// How to get the Token Endpoint URL (this is a DIFFERENT value from the iframe src used before):
+//   1. Copilot Studio > your agent > Channels > "Custom website"
+//   2. Make sure the agent is published, and Security > Authentication is set to
+//      "No authentication" (required for this to work without a sign-in flow).
+//   3. On the Custom website channel page, look for a field/button specifically labeled
+//      "Tokens endpoint" (sometimes shown next to, but NOT the same as, the iframe/script
+//      snippet — don't reuse the copilotstudio.microsoft.com/.../webchat test URL from before).
+//      It looks like: https://<region>.environment.api.powerplatform.com/copilotstudio/directline/token?api-version=2022-03-01-preview
+//   4. Copy that URL and paste it below between the quotes.
+//
+// Security note: "No authentication" means anyone with this file (and the token endpoint baked
+// into it) can chat with the agent — fine for testing/demoing, worth revisiting with your IT/
+// Copilot Studio admin before this goes anywhere near real board-level usage.
+const TOKEN_ENDPOINT_URL = ""; // <-- paste your "Tokens endpoint" URL here, if you get one later
+
+// FALLBACK: this agent's "Custom website" channel only offers an <iframe> snippet (no separate
+// token endpoint available), so full restyling + clickable-chips-send-real-messages aren't
+// possible yet — that needs either a token endpoint or a bigger Entra ID sign-in + hosting setup.
+// This gets the real agent connected now, just with Microsoft's default widget look, and the
+// suggested-question chips will keep using the mock answers above (they can't reach into an
+// iframe from this page). Swap for the token endpoint later to unlock both.
+const IFRAME_EMBED_URL = "https://copilotstudio.microsoft.com/environments/Default-6afa0e00-fa14-40b7-8a2e-22a7f8c357d5/bots/ds_AgentGovernanceCompanion/webchat?__version__=2";
+
+// Chat styling — mapped to the same CGIAR palette used across this site (see :root above).
+const cgiarWebChatStyleOptions = {
+  backgroundColor: "#fafbfc",
+  bubbleBackground: "#e6f1ed",
+  bubbleTextColor: "#101915",
+  bubbleBorderRadius: 10,
+  bubbleFromUserBackground: "#033529",
+  bubbleFromUserTextColor: "#ffffff",
+  bubbleFromUserBorderRadius: 10,
+  accent: "#17F1BD",
+  primaryFont: "Arial, 'Helvetica Neue', Helvetica, sans-serif",
+  botAvatarInitials: "CG",
+  botAvatarBackgroundColor: "#065F4A",
+  userAvatarInitials: "You",
+  userAvatarBackgroundColor: "#033529",
+  sendBoxBackground: "#ffffff",
+  sendBoxTextColor: "#101915",
+  sendBoxButtonColorDefault: "#033529",
+  sendBoxButtonColorOnHover: "#065F4A",
+  suggestedActionBackgroundColor: "#e6f1ed",
+  suggestedActionBorderColor: "#dde6e2",
+  suggestedActionTextColor: "#065F4A",
+  rootHeight: "100%",
+  rootWidth: "100%"
+};
+
+// ================= DATA (sourced from CGIAR Governance Companion Framework v4.2) =================
+
+const modules = [
+  {name:"Governance Transition & Structure", meta:"What changed on 15 June 2026",
+    body:`<h3>Governance Transition & Structure</h3>
+    <p>Effective <strong>15 June 2026</strong>, CGIAR's governance structure changed:</p>
+    <ul>
+      <li>Per the Charter of the CGIAR System Organization (Articles 7&ndash;9), the <strong>CGIAR Board</strong> (formerly the Integrated Partnership Board / IPB) "means the governing body of the CGIAR System Organization and of the Integrated Partnership" &mdash; 19 members: 12 Center Board Chairs (ex officio, voting), 6 Independent Members including the Board Chair and AFRC Chair (voting), and the Executive Managing Director (non-voting).</li>
+      <li>The <strong>CGIAR Council</strong> is the new name for the System Council &mdash; the body itself is unchanged.</li>
+      <li>The <strong>CGIAR Office</strong> is the new name for the System Management Office &mdash; the body itself is unchanged.</li>
+      <li>The <strong>General Assembly of Centers is dissolved.</strong></li>
+      <li>The <strong>Nominations Committee</strong> moves to the Board.</li>
+    </ul>
+    <p>Current governing documents remain valid until superseded. Items marked <em>UPDATE PENDING</em> will be shared by the Secretariat once approved (several expected September 2026).</p>`},
+  {name:"Governing Documents", meta:"Framework, Charter, Rules of Procedure, IFA",
+    body:`<h3>Governing Documents</h3>
+    <p>The primary legal and governance instruments. See the Document Index tab for live links to: CGIAR Board & Council overview pages, the CGIAR System Framework, Charter of the CGIAR System Organization, Host Country Agreement, Rules of Procedure for both Board and Council (the Board's is not yet published; the Council's current version remains valid with updates pending), the Integration Framework Agreement, the Board composition and member profiles page, and the Board/Council Decision Registers.</p>`},
+  {name:"Board Committees", meta:"Chair, Vice-Chair, AFRC, Nominations Committee",
+    body:`<h3>CGIAR Board Committees</h3>
+    <ul>
+      <li><strong>Board Chair</strong> &mdash; Terms of Reference approved by the Board, 30 July 2026</li>
+      <li><strong>Board Vice-Chair</strong> &mdash; Terms of Reference update pending</li>
+      <li><strong>Audit, Finance and Risk Committee (AFRC)</strong> &mdash; Terms of Reference update pending (current version on file dates to 2024 and is not up to date); new AFRC Chair to be appointed</li>
+      <li><strong>Nominations Committee (NomCo)</strong> &mdash; Terms of Reference updated, now sits under the Board</li>
+    </ul>
+    <p>Full Terms of Reference for each committee are linked below and in the Document Index.</p>`},
+  {name:"Council Committees & Advisory Bodies", meta:"Committees: SIMEC, AOC · Advisory bodies (not committees): IAES, ISDC, SPIA",
+    body:`<h3>Council Committees & Advisory Bodies</h3>
+    <h4>Council standing committees</h4>
+    <ul>
+      <li><strong>SIMEC</strong> &mdash; Strategic Impact, Monitoring & Evaluation Committee</li>
+      <li><strong>AOC</strong> &mdash; Assurance Oversight Committee</li>
+    </ul>
+    <h4>Independent advisory bodies</h4>
+    <ul>
+      <li><strong>IAES</strong> &mdash; Independent Advisory and Evaluation Services</li>
+      <li><strong>ISDC</strong> &mdash; Independent Science for Development Council</li>
+      <li><strong>SPIA</strong> &mdash; Standing Panel on Impact Assessment</li>
+    </ul>`},
+  {name:"Policies & Ethics", meta:"Conduct, safeguarding, whistleblowing, risk",
+    body:`<h3>Policies & Ethics &mdash; Key Member Obligations</h3>
+    <h4>Conduct & ethics</h4>
+    <p>Code of Conduct for Governance Officials, Code of Ethics on Business Conduct, Policy on Protection Against Harassment and Discrimination, Safeguarding Policy, Policy on Whistleblowing and Protection from Retaliation, the CGIAR Ethics Framework, and the CGIAR Research Ethics Code. These apply primarily to Board members and CGIAR Office staff &mdash; Council members are covered by a narrower set of obligations, so check with your Secretariat if you're unsure which policies apply to you.</p>
+    <h4>Data, risk & inclusion</h4>
+    <p>Open Access Data Management Policy, the Integrated Partnership Risk and Oversight Plan, and the Gender, Diversity and Inclusion Framework.</p>
+    <h4>Travel & expenses</h4>
+    <p>A new CGIAR Board Travel Policy is expected to be approved at the September 2026 Board meeting; until then, contact the Board Secretariat for current guidance. Council member travel arrangements are coordinated through the Council Secretariat.</p>
+    <h4>Declaration of Interest</h4>
+    <p>Governance Officials required to complete a Declaration of Interest will receive a link to the form through Diligent Boards.</p>`},
+  {name:"Strategy & Research", meta:"2030 strategy and research portfolio",
+    body:`<h3>Strategy & Research</h3>
+    <p>High-level context: the CGIAR 2030 Research and Innovation Strategy, the 2025&ndash;2030 Research Portfolio, and the Technical Reporting Arrangement, plus the live Results Dashboard tracking research outcomes. Full documents linked in the Document Index.</p>`},
+  {name:"Reports & Dashboards", meta:"Financial, portfolio, and workforce reporting",
+    body:`<h3>Key Reports & Dashboards</h3>
+    <p>Annual Reports, Financial Reports, Intellectual Assets Reports, Portfolio Reports, the Culture & Engagement Action Plan, and live dashboards including the CGIAR Results Dashboard, Trust Fund, Financial Report, Financing Plan, and the Workforce Dashboard. Dashboards update automatically &mdash; always point members to the live link rather than reproducing figures.</p>`},
+  {name:"Ethics, Assurance, Oversight & Risk", meta:"Ethics, audit, ombuds, and risk together",
+    body:`<h3>Ethics, Assurance, Oversight & Risk</h3>
+    <p>CGIAR's integrated assurance function brings three areas together: the <strong>Office of Ethics and Business Conduct (EBC)</strong>, which runs the Ethics@CGIAR reporting channel and looks into conduct concerns; <strong>Internal Audit</strong>, which gives independent assurance over controls and operations and reports to the AFRC &mdash; audit materials are shared with the Board through the AFRC and Diligent rather than published here (a short <a href="https://www.youtube.com/watch?v=Ljat_iyRWdQ" target="_blank" rel="noopener">Internal Audit overview video</a> is also available); and the <strong>Risk function</strong>, which maintains the Integrated Partnership Risk and Oversight Plan and the Risk Appetite Statement. The <strong>Ombuds Office</strong> offers an independent, confidential channel for informal resolution, and the <strong>CGIAR Escalation Framework</strong> sets out how concerns move through the system. Terms of Reference for each function are linked below and in the Document Index.</p>
+    <p><strong>For ethics concerns:</strong> don't advise on the substance of a concern yourself &mdash; point the member to the Ombuds Office (<a href="mailto:a.rao@cgiar.org">a.rao@cgiar.org</a>) or <a href="mailto:ethics@cgiar.org">ethics@cgiar.org</a>, and let the Secretariat confirm the right channel for their specific situation.</p>`},
+  {name:"Practical Resources", meta:"Travel, calendar, Diligent, secretariat contacts",
+    body:`<h3>Practical Resources</h3>
+    <p>The questions members ask most:</p>
+    <ul>
+      <li><strong>Travel & expenses</strong> &mdash; contact the <a href="mailto:cgiar-board-secretariat@cgiar.org">Board Secretariat</a> (or the <a href="mailto:cgiar-council-secretariat@cgiar.org">Council Secretariat</a>).</li>
+      <li><strong>Diligent board portal</strong> &mdash; see the <strong>Diligent Platform</strong> tab in the left navigation for the sign-in link, mobile app setup, and how to get help.</li>
+      <li><strong>CGIAR Governance Calendar 2026</strong>, the <strong>Global Leadership Team</strong>, and the <strong>CGIAR Centers overview</strong> &mdash; linked below.</li>
+    </ul>
+    <p>See the Contacts tab for the full secretariat and mailing-list directory.</p>`},
+  {name:"Onboarding Materials", meta:"CGIAR 101 for new Independent Members",
+    body:`<h3>Onboarding Materials</h3>
+    <p>Most Center Board Chairs join this Board already knowing CGIAR well. If you're a newly appointed Independent Member and this is your first exposure to CGIAR, start here before the modules above.</p>
+    <ul>
+      <li><a href="https://www.cgiar.org/cgiar-system" target="_blank" rel="noopener">CGIAR System overview</a> &mdash; what CGIAR is and how it's structured</li>
+      <li><a href="https://www.cgiar.org/our-centers-across-world" target="_blank" rel="noopener">Our Centers across the world</a> &mdash; the 12 CGIAR Research Centers whose Board Chairs sit on the CGIAR Board</li>
+      <li><a href="https://www.cgiar.org/cgiar-research-portfolio-2025-2030" target="_blank" rel="noopener">2025&ndash;2030 Research Portfolio</a> &mdash; what CGIAR researches and why</li>
+      <li><a href="https://www.cgiar.org/cgiar-system#Governance" target="_blank" rel="noopener">Governance overview</a> &mdash; how the Board, Council, and Centers fit together</li>
+    </ul>
+    <p>Then head back to <strong>Governance Transition & Structure</strong> above for what's new since 15 June 2026.</p>`},
+  {name:"Board Meetings & Decision Register", meta:"Agendas, minutes, and recorded Board decisions",
+    body:`<h3>Board Meetings & Decision Register</h3>
+    <p>Where to find CGIAR Board meeting materials and the formal record of Board decisions.</p>
+    <ul>
+      <li><a href="https://www.cgiar.org/governance?f%5B0%5D=governance_type%3ACGIAR%20Board" target="_blank" rel="noopener">Board Meetings &amp; Documents</a> &mdash; agendas, papers, and minutes from past and upcoming Board meetings</li>
+      <li><a href="https://www.cgiar.org/cgiar-board#Decision+Register" target="_blank" rel="noopener">Board Decision Register</a> &mdash; the formal record of decisions taken by the CGIAR Board</li>
+    </ul>`},
+  {name:"Council Meetings & Decision Register", meta:"Agendas, minutes, and recorded Council decisions",
+    body:`<h3>Council Meetings & Decision Register</h3>
+    <p>Where to find CGIAR Council meeting materials and the formal record of Council decisions.</p>
+    <ul>
+      <li><a href="https://www.cgiar.org/governance?f%5B0%5D=governance_type%3ACGIAR%20Council" target="_blank" rel="noopener">Council Meetings &amp; Documents</a> &mdash; agendas, papers, and minutes from past and upcoming Council meetings</li>
+      <li><a href="https://www.cgiar.org/cgiar-council#Decision+Register" target="_blank" rel="noopener">Council Decision Register</a> &mdash; the formal record of decisions taken by the CGIAR Council</li>
+    </ul>`},
+  {name:"Diligent Platform", meta:"The Diligent board portal — features, login & support (Board only)",
+    body:`<h3>Diligent Platform</h3>
+    <p>Diligent is the platform we use for issuing Board documents &mdash; board books, agendas, minutes, and comments on the books all live in one place.</p>
+    <ul>
+      <li><strong>Board books &amp; materials</strong> &mdash; agendas, papers and minutes in one place, available online and offline.</li>
+      <li><strong>Comments on board books</strong> &mdash; annotate and discuss materials directly within a document.</li>
+      <li><strong>Mobile &amp; offline access</strong> &mdash; review materials on your phone or tablet, even without an internet connection.</li>
+    </ul>
+    <p>See the <strong>Diligent Platform</strong> tab in the left navigation for the full guide &mdash; sign-in link, mobile app setup, and where to get help.</p>`}
+];
+
+// Maps each of the original 9 modules to its matching Document Index category (docCategories,
+// defined further below), so the walkthrough can list the actual documents for that topic rather
+// than just describing them in prose. The 3 modules added above (indices 9-11) already carry
+// their own curated links and are left out of this map.
+const moduleDocCategoryMap = {0:0, 1:0, 2:1, 3:2, 4:4, 5:5, 6:6, 7:7, 8:8};
+function relatedDocsHtml(modIdx){
+  const catIdx = moduleDocCategoryMap[modIdx];
+  if(catIdx===undefined) return '';
+  const cat = docCategories[catIdx];
+  // Board-specific and System-Organization-specific instruments (Board officer ToRs, Board RoP,
+  // Board Composition/Decision Register, Board Travel Policy, the SO Risk Management Policy) are
+  // tagged hideFromCouncil and dropped here for Council members, since they aren't part of a
+  // Council member's own obligations. They remain visible to everyone in the full Document Index.
+  const items = (cat ? cat.items : []).filter(it => !(it.hideFromCouncil && selectedRole==='council'));
+  if(!items.length) return '';
+  const links = items.map(it=>{
+    const pill = it.pending ? ' <span class="pill pending">UPDATE PENDING</span>' : (it.note ? ` <span class="pill attach">${it.note}</span>` : '');
+    const label = it.url ? `<a href="${it.url}" target="_blank" rel="noopener">${it.name}</a>` : it.name;
+    return `<li>${label}${pill}</li>`;
+  }).join('');
+  return `<div class="wt-related-docs"><h4>Related documents</h4><ul>${links}</ul></div>`;
+}
+
+// ---------- Board / Council role tracks ----------
+// Each role maps to { required, reference } — both are arrays of indices into `modules`.
+// `required` is the linear stepper track (Prev/Next, mark-complete). `reference` is an
+// always-visible, non-linear shelf of modules that don't need "completing".
+const moduleOrder = {
+  // Board members here are mostly long-tenured Center Board Chairs — they already know CGIAR's
+  // mission cold. What's genuinely new is this reconstituted Board itself (effective 15 June
+  // 2026), so the required track is just the delta: what changed, their committees, and the
+  // fiduciary oversight function. Everything else is useful but not something a veteran should
+  // be forced through linearly, so it's an optional reference shelf instead.
+  board: {
+    required:  [0,2,7],
+    // Reference shelf order: current governing documents and Board's own recurring business
+    // (Meetings & Decision Register) lead, ahead of Council-side reference material; Onboarding
+    // Materials (module 9) is intentionally left out — the agent itself covers induction, and its
+    // links duplicate what's already surfaced elsewhere in this walkthrough.
+    reference: [1,10,4,8,5,6,3,12]
+  },
+  // Option A (orientation-first): Council members are typically external stakeholders (funder
+  // reps, government officials) with no prior CGIAR exposure, so mission/context comes before
+  // any org structure or committee acronyms -> transition -> their committees -> obligations ->
+  // logistics -> reference documents -> deeper reporting/risk. "Board Committees" (index 2) is
+  // deliberately left out here — Council already gets its own "Council Committees & Advisory
+  // Bodies" module (index 3), so the Board's committee lineup doesn't need to be a required step.
+  council: {
+    required:  [5,0,3,4,8,1,6,7],
+    reference: [11]
+  }
+};
+
+function loadRole(){
+  try { return localStorage.getItem('cgiar_role'); } catch(e){ return null; }
+}
+function saveRole(r){
+  try { localStorage.setItem('cgiar_role', r); } catch(e){}
+}
+function clearRole(){
+  try { localStorage.removeItem('cgiar_role'); } catch(e){}
+}
+
+let selectedRole = loadRole(); // 'board' | 'council' | null
+function roleConfig(){ return moduleOrder[selectedRole] || moduleOrder.board; }
+function currentOrder(){ return roleConfig().required; }
+function referenceOrder(){ return roleConfig().reference; }
+
+let progress = new Array(modules.length).fill(false); // indexed by module id, shared across roles
+let currentStep = 0; // index into currentOrder()
+let refPaneOpen = {}; // modIdx -> bool, tracks which reference-shelf panes are expanded
+
+function chooseRole(role){
+  selectedRole = role;
+  saveRole(role);
+  currentStep = 0;
+  refPaneOpen = {};
+  renderRoleUI();
+  if(typeof renderDashboard === 'function') renderDashboard();
+}
+function resetRole(){
+  selectedRole = null;
+  clearRole();
+  renderRoleUI();
+  if(typeof renderDashboard === 'function') renderDashboard();
+}
+// Diligent Platform is Board-only (Board members run meetings through it; Council members
+// don't use it) — the nav item stays hidden until a Board role is selected, and switching away
+// from Board (or resetting the role) hides it again and bounces off the page if it was open.
+function updateDiligentVisibility(){
+  const item = document.getElementById('nav-diligent');
+  if(!item) return;
+  const show = selectedRole === 'board';
+  item.classList.toggle('hidden', !show);
+  if(!show){
+    const diligentPage = document.getElementById('page-diligent');
+    if(diligentPage && diligentPage.classList.contains('active')) goToPage('dashboard');
+  }
+}
+
+function renderRoleUI(){
+  updateDiligentVisibility();
+  const gate = document.getElementById('role-gate');
+  const badge = document.getElementById('wt-role-badge');
+  const layout = document.getElementById('wt-layout');
+  const refSection = document.getElementById('wt-reference-section');
+  if(!selectedRole){
+    gate.classList.remove('hidden');
+    badge.classList.add('hidden');
+    layout.classList.add('hidden');
+    refSection.classList.add('hidden');
+    return;
+  }
+  gate.classList.add('hidden');
+  badge.classList.remove('hidden');
+  layout.classList.remove('hidden');
+  document.getElementById('wt-role-label').textContent = selectedRole==='board' ? 'Board Member' : 'Council Member';
+  renderSteps();
+  renderReferenceLibrary();
+}
+
+function toggleRefPane(modIdx){
+  refPaneOpen[modIdx] = !refPaneOpen[modIdx];
+  renderReferenceLibrary();
+}
+function renderReferenceLibrary(){
+  const section = document.getElementById('wt-reference-section');
+  const list = document.getElementById('wt-reference-list');
+  const refIdxs = selectedRole ? referenceOrder() : [];
+  if(!refIdxs.length){ section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  list.innerHTML = refIdxs.map(modIdx=>{
+    const m = modules[modIdx];
+    const isOpen = !!refPaneOpen[modIdx];
+    return `
+      <div class="doc-pane${isOpen?' open':''}">
+        <div class="doc-pane-header" onclick="toggleRefPane(${modIdx})">
+          <div class="htitle"><span class="chevron">&#9654;</span><span class="cat-name">${m.name}</span></div>
+          <span class="count-pill">${m.meta}</span>
+        </div>
+        <div class="doc-pane-body">${m.body}${relatedDocsHtml(modIdx)}</div>
+      </div>`;
+  }).join('');
+}
+
+// Shared page-switch logic — used by dashboard shortcuts and CTAs.
+function goToPage(pageId){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===pageId));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id === 'page-'+pageId));
+  updateFabVisibility(pageId);
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=> goToPage(item.dataset.page));
+});
+
+// ---------- Floating "Ask AI" bubble ----------
+// Finds whichever single chat node is currently live — the mock chat-shell, the SDK's #webchat
+// div, or the iframe fallback wrapper — wherever it currently lives (its home on the Ask AI page,
+// or the floating panel), rather than assuming a fixed id (initAskAI()/initAskAIIframeFallback()
+// both replace the original node's outerHTML once connected).
+function getMovableChatNode(){
+  const home = document.getElementById('ask-chat-home');
+  const slot = document.getElementById('fab-slot');
+  return (home && home.firstElementChild) || (slot && slot.firstElementChild) || null;
+}
+function openFab(){
+  const node = getMovableChatNode();
+  const slot = document.getElementById('fab-slot');
+  if(node && slot && node.parentElement !== slot) slot.appendChild(node);
+  document.getElementById('fab-panel').classList.add('open');
+}
+function closeFab(){
+  const node = getMovableChatNode();
+  const home = document.getElementById('ask-chat-home');
+  if(node && home && node.parentElement !== home) home.appendChild(node);
+  document.getElementById('fab-panel').classList.remove('open');
+}
+function toggleFab(){
+  document.getElementById('fab-panel').classList.contains('open') ? closeFab() : openFab();
+}
+// The full chat already lives on the Ask AI page itself, so the bubble hides there and — if it
+// was left open from another page — closes and hands the chat node back to its home spot.
+function updateFabVisibility(pageId){
+  const btn = document.getElementById('fab-btn');
+  if(!btn) return;
+  if(pageId === 'ask'){
+    btn.classList.add('hidden');
+    closeFab();
+  } else {
+    btn.classList.remove('hidden');
+  }
+}
+
+// ---------- Latest updates: pause / prev / next controlled carousel ----------
+// Replaces the old auto-scrolling marquee (couldn't be paused except by hovering, and only ever
+// moved forward) with a single-item view plus explicit controls, so a user can pause it and step
+// backward to something they already scrolled past.
+const updatesData = [
+  {href:"https://www.cgiar.org/news-events/news/cgiar-appoints-new-board-chair", date:"1 Aug 2026", title:"New CGIAR Board Chair appointed", desc:"H.E. Hailemariam Dessalegn Boshe, former Prime Minister of Ethiopia, has been appointed the CGIAR Board's first independent Chair, effective 1 August 2026.", pending:false},
+  {href:"https://www.cgiar.org/news-events/news/cgiar-establishes-new-board", date:"15 Jun 2026", title:"Governance transition took effect", desc:"The CGIAR Board (formerly the Integrated Partnership Board) became the top governing body. The CGIAR Council replaces the System Council, the CGIAR Office replaces the System Management Office, and the General Assembly of Centers is dissolved.", pending:false},
+  {href:"https://cgspace.cgiar.org/server/api/core/bitstreams/bde4eb8d-adcd-4c8f-bd6d-d94578f77449/content", date:"Pending", title:"AFRC Chair appointment in progress", desc:"Richard Golding is serving as Interim AFRC Chair while a permanent Chair is appointed and the Audit, Finance and Risk Committee's Terms of Reference are updated.", pending:true},
+  {href:"https://cgspace.cgiar.org/items/2b93cd02-95a6-43f8-b3fa-d67875ca95a4", date:"Updated", title:"Nominations Committee moved to the Board", desc:"The Nominations Committee's Terms of Reference have been updated to reflect its move from the former System Council structure to the CGIAR Board.", pending:false},
+];
+let updatesIdx = 0;
+let updatesTimer = null;
+let updatesPlaying = true;
+
+function renderUpdateAt(i){
+  const u = updatesData[i];
+  const track = document.getElementById('updates-track');
+  if(!track) return;
+  track.innerHTML = `<a class="update-row${u.pending?' pending':''}" href="${u.href}" target="_blank" rel="noopener">
+    <div class="update-date">${u.date}</div>
+    <div>
+      <div class="update-title">${u.title}</div>
+      <div class="update-desc">${u.desc}</div>
+    </div>
+  </a>`;
+  const pos = document.getElementById('updates-pos');
+  if(pos) pos.textContent = (i+1) + ' of ' + updatesData.length;
+}
+function updatesGoTo(i){
+  updatesIdx = (i + updatesData.length) % updatesData.length;
+  renderUpdateAt(updatesIdx);
+}
+function pauseForManualNav(){
+  if(updatesPlaying){
+    updatesPlaying = false;
+    clearInterval(updatesTimer);
+    const btn = document.getElementById('upd-playpause');
+    if(btn){ btn.innerHTML = '&#9654;'; btn.title = 'Resume updates'; btn.setAttribute('aria-label','Resume updates'); }
+  }
+}
+function updatesNext(){ pauseForManualNav(); updatesGoTo(updatesIdx+1); }
+function updatesPrev(){ pauseForManualNav(); updatesGoTo(updatesIdx-1); }
+function startUpdatesAutoplay(){
+  clearInterval(updatesTimer);
+  updatesTimer = setInterval(()=>{ updatesGoTo(updatesIdx+1); }, 6000);
+}
+function toggleUpdatesPlay(){
+  updatesPlaying = !updatesPlaying;
+  const btn = document.getElementById('upd-playpause');
+  if(updatesPlaying){
+    startUpdatesAutoplay();
+    if(btn){ btn.innerHTML = '&#10074;&#10074;'; btn.title = 'Pause updates'; btn.setAttribute('aria-label','Pause updates'); }
+  } else {
+    clearInterval(updatesTimer);
+    if(btn){ btn.innerHTML = '&#9654;'; btn.title = 'Resume updates'; btn.setAttribute('aria-label','Resume updates'); }
+  }
+}
+renderUpdateAt(0);
+startUpdatesAutoplay();
+
+// ---------- Dashboard: collapsible progress/pending panes ----------
+let modulesPaneOpen = false;
+let pendingPaneOpen = false;
+
+function toggleModulesPane(){
+  modulesPaneOpen = !modulesPaneOpen;
+  document.getElementById('modules-pane').classList.toggle('open', modulesPaneOpen);
+}
+function togglePendingPane(){
+  pendingPaneOpen = !pendingPaneOpen;
+  document.getElementById('pending-pane').classList.toggle('open', pendingPaneOpen);
+}
+
+function renderPendingWidget(){
+  const wrap = document.getElementById('pending-widget');
+  const pane = document.getElementById('pending-pane');
+  const countEl = document.getElementById('pending-pane-count');
+  if(!wrap || !pane) return;
+  const pendingItems = [];
+  docCategories.forEach(cat=>{
+    cat.items.forEach(it=>{ if(it.pending) pendingItems.push(it); });
+  });
+  if(!pendingItems.length){
+    pane.classList.add('hidden');
+    return;
+  }
+  pane.classList.remove('hidden');
+  if(countEl) countEl.textContent = pendingItems.length + ' pending';
+  wrap.innerHTML = `
+    <div style="text-align:right;margin-bottom:8px;">
+      <a href="#" onclick="goToPage('archive');return false;" style="font-size:12px;color:var(--navy2);">View in Document Index &rarr;</a>
+    </div>
+    ${pendingItems.map(it=>`<div class="doclink"><span>${it.name}</span><span class="pill pending">UPDATE PENDING</span></div>`).join('')}`;
+}
+
+function renderDashboard(){
+  const order = selectedRole ? currentOrder() : modules.map((_,i)=>i);
+  const refOrder = selectedRole ? referenceOrder() : [];
+  const list = document.getElementById('module-list');
+  const requiredHtml = order.map((modIdx,i)=>{
+    const m = modules[modIdx];
+    let badge = progress[modIdx] ? '<span class="badge done">Complete</span>' : (selectedRole && i===currentStep ? '<span class="badge progress">In progress</span>' : '<span class="badge pending">Not started</span>');
+    return `<div class="module-row"><div><div class="module-name">${m.name}</div><div class="module-meta">${m.meta}</div></div>${badge}</div>`;
+  }).join('');
+  const referenceHtml = refOrder.map(modIdx=>{
+    const m = modules[modIdx];
+    return `<div class="module-row"><div><div class="module-name">${m.name}</div><div class="module-meta">${m.meta}</div></div><span class="badge progress">Reference</span></div>`;
+  }).join('');
+  list.innerHTML = requiredHtml + referenceHtml;
+  const summaryEl = document.getElementById('modules-pane-summary');
+  if(summaryEl){ summaryEl.textContent = 'Optional — browse anytime'; }
+  renderPendingWidget();
+}
+
+function renderSteps(){
+  const order = currentOrder();
+  const wrap = document.getElementById('wt-steps');
+  wrap.innerHTML = order.map((modIdx,i)=>{
+    const m = modules[modIdx];
+    let cls = 'wt-step'+(i===currentStep?' active':'')+(progress[modIdx]?' complete':'');
+    return `<div class="${cls}" onclick="goToStep(${i})"><span class="chk"></span>${m.name}</div>`;
+  }).join('');
+  document.getElementById('wt-content').innerHTML = modules[order[currentStep]].body + relatedDocsHtml(order[currentStep]);
+  document.getElementById('wt-prev').disabled = currentStep===0;
+  document.getElementById('wt-next').textContent = currentStep===order.length-1 ? 'Mark complete & finish' : 'Mark complete & continue →';
+}
+function goToStep(i){ currentStep=i; renderSteps(); }
+document.getElementById('wt-prev').onclick = ()=>{ if(currentStep>0){currentStep--; renderSteps();} };
+
+let toastTimer = null;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.innerHTML = '<span class="check">&#10003;</span>' + msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+document.getElementById('wt-next').onclick = ()=>{
+  const order = currentOrder();
+  const modIdx = order[currentStep];
+  const alreadyDone = progress[modIdx];
+  progress[modIdx]=true;
+  if(!alreadyDone) showToast('Marked complete: ' + modules[modIdx].name);
+  if(currentStep<order.length-1){ currentStep++; }
+  renderSteps(); renderDashboard();
+};
+
+// ---------- Ask AI (mock, grounded in real docs) ----------
+const sampleQA = [
+  {q:"What changed in the governance transition?", a:"Effective 15 June 2026, the CGIAR Board (formerly the Integrated Partnership Board) became the top governing body with 19 members. The CGIAR Council replaces the System Council, the CGIAR Office replaces the System Management Office, and the General Assembly of Centers has been dissolved. The Nominations Committee now sits under the Board.", src:'Source: <a href="https://www.cgiar.org/integrated-partnership-board" target="_blank">CGIAR Board overview</a>'},
+  {q:"What does the AFRC do?", a:"The Audit, Finance and Risk Committee (AFRC) is a Board committee overseeing audit, financial reporting, and risk management. Its Terms of Reference are currently being updated following the governance transition — the version on file dates to 2024 and is not current — and a new AFRC Chair is being appointed (Richard Golding is the interim AFRC Chair).", src:'Source: <a href="https://cgspace.cgiar.org/server/api/core/bitstreams/bde4eb8d-adcd-4c8f-bd6d-d94578f77449/content" target="_blank">AFRC Terms of Reference (2024 version — not current)</a>'},
+  {q:"Who do I contact about travel & expenses?", a:"If you're a Board member, your travel and expenses are arranged by the Secretariat — contact cgiar-board-secretariat@cgiar.org for travel queries and the expense report template. If you're a Council member from a Developing Countries Constituency seat, you may be reimbursed per Section 14.2 of the Council Rules of Procedure — contact cgiar-council-secretariat@cgiar.org.", src:"Source: Governance Companion Framework, Section 8 — Practical Resources"},
+  {q:"Where do I find CGIAR's financial reports?", a:"Financial Reports, the Financial Report Dashboard, and the Financial Plan Dashboard are all published live on cgiar.org and update automatically — I'll always point you to the current link rather than reproducing figures here.", src:'Source: <a href="https://www.cgiar.org/food-security-impact/finance-reports/" target="_blank">Financial Reports</a>'},
+  {q:"Who is the Council Secretary?", a:"Sylvia Oyinlola is the Council Secretary (S.Oyinlola@cgiar.org). For Board, NomCo, and AFRC secretarial matters, Christine Larson-Luhila is the contact (C.Larson-Luhila@cgiar.org).", src:"Source: Governance Companion Framework — Key Contacts"}
+];
+function askSample(i){
+  const q = sampleQA[i].q;
+  // token-based SDK connection: actually send the question into the real conversation
+  if(liveConnectionType === 'sdk' && webChatStore){
+    webChatStore.dispatch({ type:'WEB_CHAT/SEND_MESSAGE', payload:{ text:q } });
+    return;
+  }
+  // iframe connection: a cross-origin iframe can't be reached or auto-filled by this page's JS —
+  // that's a browser security boundary, not something we can code around. Best available option:
+  // copy the question so it's one paste away instead of retyping it into the agent below.
+  if(liveConnectionType === 'iframe'){
+    copyQuestionForIframe(q);
+    return;
+  }
+  pushMsg('user', q);
+  showTyping();
+  setTimeout(()=>{ hideTyping(); pushMsg('bot', sampleQA[i].a, sampleQA[i].src); }, 900);
+}
+
+// Robust clipboard copy: the modern Clipboard API needs a secure context (https/localhost) and
+// fails silently on file:// in some browsers, so fall back to the old execCommand trick, which
+// works from a plain double-clicked local file too.
+function copyTextRobust(text){
+  return new Promise((resolve)=>{
+    if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(()=>resolve(true)).catch(()=>resolve(fallbackCopy(text)));
+    } else {
+      resolve(fallbackCopy(text));
+    }
+  });
+}
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+function copyQuestionForIframe(q){
+  const notice = document.getElementById('ask-notice');
+  copyTextRobust(q).then(ok=>{
+    notice.innerHTML = ok
+      ? 'Copied to clipboard: &ldquo;' + q + '&rdquo; — click into the agent\'s chat box below, paste (Ctrl+V / Cmd+V), then press Enter.'
+      : 'Couldn\'t copy automatically — please type this into the agent below: &ldquo;' + q + '&rdquo;';
+  });
+}
+function sendChat(){
+  const input = document.getElementById('chat-input');
+  const val = input.value.trim();
+  if(!val) return;
+  pushMsg('user', val);
+  input.value='';
+  showTyping();
+  setTimeout(()=>{
+    hideTyping();
+    pushMsg('bot', "This is a prototype response. Once connected to Copilot Studio and the live cgiar.org / CGSpace sources, this will retrieve grounded answers automatically.", "Source: (live retrieval once connected)");
+  }, 900);
+}
+function pushMsg(role, text, src){
+  const body = document.getElementById('chat-body');
+  const div = document.createElement('div');
+  div.className = 'msg '+role;
+  div.innerHTML = text + (src ? `<span class="src">${src}</span>` : '');
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function showTyping(){
+  const body = document.getElementById('chat-body');
+  if(!body || document.getElementById('typing-indicator')) return;
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function hideTyping(){
+  const el = document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+
+// ---------- Document Index (real docs + links from the framework) ----------
+const docCategories = [
+  {title:"1. Governing Documents", items:[
+    {name:"CGIAR Board overview page", url:"https://www.cgiar.org/integrated-partnership-board", note:"UPDATED"},
+    {name:"CGIAR Council overview page", url:"https://www.cgiar.org/cgiar-system-council", note:"UPDATED"},
+    {name:"CGIAR System Framework", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/42cb308d-97a6-434e-bc46-4bfc0340fdae/content", note:"UPDATED"},
+    {name:"Charter of the CGIAR System Organization", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/6877b527-821c-49f4-bd43-159361a1919b/content", note:"UPDATED"},
+    {name:"Host Country Agreement with the Government of France", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/6f19a932-8e28-43b3-a19b-d4a3c7492b6e/content"},
+    {name:"Rules of Procedure of the CGIAR Council (formerly System Council)", url:"https://cgspace.cgiar.org/bitstreams/50db7fc1-c0da-4dfd-9180-4c21aadef432/download", pending:true},
+    {name:"CGIAR Board Rules of Procedure (formerly IPB Rules of Procedure)", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/90e5d7e1-f367-4e81-996a-b8b19bdf1e89/content", pending:true, hideFromCouncil:true},
+    {name:"Integration Framework Agreement (IFA)", url:"https://cgspace.cgiar.org/bitstreams/46419340-8bed-4984-bd8b-77f0d293ff58/download"},
+    {name:"CGIAR Board Composition and members profiles", url:"https://www.cgiar.org/cgiar-board", hideFromCouncil:true},
+    {name:"CGIAR Board Decision Register", url:"https://www.cgiar.org/cgiar-board#Decision+Register", hideFromCouncil:true},
+    {name:"CGIAR Council Decision Register", url:"https://www.cgiar.org/cgiar-council#Decision+Register"},
+    {name:"Board Chair — Terms of Reference", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/1d5246d8-2cb8-45b7-974b-5313665fbc60/content", note:"Approved 30 Jul 2026", hideFromCouncil:true},
+    {name:"Board Vice-Chair — Terms of Reference", url:"https://cgspace.cgiar.org/bitstreams/c722638d-9934-4547-8a57-64a77c3098f6/download", pending:true, hideFromCouncil:true},
+  ]},
+  {title:"2. Board Committees — Terms of Reference", items:[
+    {name:"Audit, Finance and Risk Committee (AFRC) — Terms of Reference", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/bde4eb8d-adcd-4c8f-bd6d-d94578f77449/content", pending:true, weburl:"https://www.cgiar.org/cgiar-board"},
+    {name:"Nominations Committee (NomCo) — Terms of Reference", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/6167af09-610a-4f5f-b15f-ce38a69d07fa/content", note:"UPDATED", weburl:"https://www.cgiar.org/cgiar-board"},
+    {name:"CGIAR Board Standing Committees (webpage)", url:"https://www.cgiar.org/cgiar-board#Standing+Committees"},
+  ]},
+  {title:"3. Council Committees", items:[
+    {name:"Strategic Impact, Monitoring & Evaluation Committee (SIMEC)", url:"https://cgspace.cgiar.org/bitstreams/9f5bff32-b39f-48af-8b68-8490a206af0f/download"},
+    {name:"Assurance Oversight Committee (AOC)", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/43f05aa3-a695-4532-ac07-6f0f4ade75b6/content"},
+  ]},
+  {title:"4. Advisory Bodies", items:[
+    {name:"Independent Advisory and Evaluation Services (IAES)", url:"https://iaes.cgiar.org/about"},
+    {name:"ISDC — Independent Science for Development Council", url:"https://www.cgiar.org/assurance-oversights-functions#ISDC", note:"UPDATED"},
+    {name:"SPIA — Standing Panel on Impact Assessment", url:"https://iaes.cgiar.org/spia"},
+  ]},
+  {title:"5. Policies & Ethics", items:[
+    {name:"Code of Conduct for Governance Officials", url:"https://cgspace.cgiar.org/bitstream/handle/10568/113008/CGIAR-Code-of-Conduct-Gov-Officials-Approved-03.11.20.pdf"},
+    {name:"Code of Ethics on Business Conduct for CGIAR Staff", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/77a8be60-2fa1-44d3-8b61-300dc85c6266/content", note:"UPDATED"},
+    {name:"Policy on Protection Against Harassment and Discrimination", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/e283da76-a3a8-45d9-80e8-2615b7f8eb98/content", note:"UPDATED"},
+    {name:"Safeguarding Policy", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/3e7d141e-bc2b-4be7-8a52-ec4f85738a1e/content", note:"UPDATED"},
+    {name:"Policy on Whistleblowing and Protection from Retaliation", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/769f01c6-da22-4379-9cb6-54a6db3bfef0/content", note:"UPDATED"},
+    {name:"CGIAR Ethics Framework", url:"https://cgspace.cgiar.org/bitstream/handle/10568/113007/CGIAR-Ethics-Framework-Sept-2020.pdf"},
+    {name:"CGIAR Research Ethics Code", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/fe85558e-45be-4851-b2ab-c2f9542ffb94/content"},
+    {name:"Open Access Data Management Policy", url:"https://cgspace.cgiar.org/bitstream/handle/10947/4488/Open%20Access%20Data%20Management%20Policy.pdf"},
+    {name:"Integrated Partnership Risk and Oversight Plan", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/c4aaa9e3-cad9-42b7-a3cc-d72447fa3418/content", note:"UPDATED"},
+    {name:"CGIAR Board Travel Policy", url:"", attach:true, note:"new policy anticipated — Sept 2026 Board meeting", hideFromCouncil:true},
+    {name:"Gender, Diversity and Inclusion Framework", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/15457517-5aff-482b-b041-f6d56f7e86ed/content", note:"UPDATED"},
+  ]},
+  {title:"6. Strategy & Research", items:[
+    {name:"CGIAR 2030 Research and Innovation Strategy", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/6125b92c-01b6-480c-9d69-881cea4579b1/content", note:"UPDATED"},
+    {name:"CGIAR 2025–2030 Research Portfolio", url:"https://www.cgiar.org/cgiar-research-portfolio-2025-2030"},
+    {name:"CGIAR Technical Reporting Arrangement", url:"https://storage.googleapis.com/cgiarorg/2025/06/CGIAR-Technical-Reporting-Arrangement-2025-30.pdf", note:"UPDATED"},
+    {name:"Results Dashboard", url:"https://www.cgiar.org/food-security-impact/results-dashboard"},
+  ]},
+  {title:"7. Key Reports & Dashboards", items:[
+    {name:"Annual Reports", url:"https://www.cgiar.org/flagshipreport2025", note:"UPDATED"},
+    {name:"CGIAR Results Dashboard", url:"https://www.cgiar.org/food-security-impact/results-dashboard"},
+    {name:"Financial Reports", url:"https://www.cgiar.org/food-security-impact/finance-reports/"},
+    {name:"Intellectual Assets Reports", url:"https://www.cgiar.org/how-we-work/cgiar-intellectual-asset-management", note:"UPDATED"},
+    {name:"Portfolio Reports", url:"https://www.cgiar.org/cgiar-research-portfolio-2025-2030", note:"UPDATED"},
+    {name:"Culture & Engagement Action Plan", url:"https://cgspace.cgiar.org/bitstreams/37804290-e5a9-4e4f-9dbf-f29db6ad821d/download", note:"UPDATED"},
+    {name:"CGIAR Trust Fund Dashboard", url:"https://www.cgiar.org/funders/trust-fund/", note:"UPDATED"},
+    {name:"Financial Report Dashboard", url:"https://www.cgiar.org/food-security-impact/finance-reports/dashboard/"},
+    {name:"Financing Plan Dashboard", url:"https://www.cgiar.org/funders/trust-fund/financing-plan/"},
+    {name:"CGIAR Workforce Dashboard", url:"https://www.cgiar.org/how-we-work/accountability/culture-and-engagement/dashboards/cgiarworkforce"},
+  ]},
+  {title:"8. Ethics, Assurance, Oversight & Risk", items:[
+    {name:"ETHICS@CGIAR", url:"https://ethics.cgiar.org/resources/"},
+    {name:"Office of Ethics and Business Conduct — Annual Report 2023", url:"https://ethics.cgiar.org/wp-content/uploads/2024/01/CGIAR-Annual-Report-Final-12192023-Interactive.pdf"},
+    {name:"Ombuds Office", url:"https://www.cgiar.org/ombuds-office"},
+    {name:"CGIAR Escalation Framework", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/92e920d5-c921-4e69-9033-431938bd9dfe/content"},
+    {name:"Internal Audit overview (video)", url:"https://www.youtube.com/watch?v=Ljat_iyRWdQ"},
+    {name:"Integrated Partnership Risk and Oversight Plan", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/9c35276b-b467-439b-9f3e-972445fb2e6d/content", note:"UPDATED"},
+    {name:"CGIAR System Organization Risk Management Policy", url:"https://www.cgiar.org/how-we-work/accountability/policies/", note:"UPDATED", hideFromCouncil:true},
+    {name:"Risk Appetite Statement", url:"https://cgspace.cgiar.org/server/api/core/bitstreams/b7225326-c023-4419-9bc5-40b6ccb6201a/content"},
+  ]},
+  {title:"9. Practical Resources", items:[
+    {name:"All CGIAR Policies & Procedures", url:"https://www.cgiar.org/how-we-work"},
+    {name:"CGIAR Governance Calendar 2026", url:"https://cgspace.cgiar.org/bitstreams/7ffa12e8-f16b-4494-b207-7f8d946b97e8/download"},
+    {name:"Global Leadership Team", url:"https://www.cgiar.org/global-leadership-team-hub#Global+Leadership+Team", note:"UPDATED"},
+    {name:"CGIAR Centers overview", url:"https://www.cgiar.org/our-centers-across-world"},
+  ]},
+];
+
+// tracks which category panes the user has manually expanded
+let docPaneOpen = new Array(docCategories.length).fill(false);
+
+function toggleDocPane(i){
+  docPaneOpen[i] = !docPaneOpen[i];
+  renderDocs();
+}
+
+function renderDocs(){
+  const q = document.getElementById('doc-search').value.toLowerCase();
+  const wrap = document.getElementById('doc-list');
+  let html = '';
+  let anyMatch = false;
+  docCategories.forEach((cat,i)=>{
+    const items = cat.items.filter(it => (it.name+(it.note||'')).toLowerCase().includes(q));
+    if(q && !items.length) return; // hide categories with zero matches while searching
+    anyMatch = true;
+    const isOpen = docPaneOpen[i] || (q.length>0); // auto-expand matching panes while searching
+    const itemsHtml = items.map(it=>{
+      let pill = '';
+      if(it.pending) pill = '<span class="pill pending">UPDATE PENDING</span>';
+      else if(it.attach) pill = '<span class="pill attach">ATTACHMENT / POLICY</span>';
+      else if(it.note) pill = `<span class="pill attach">${it.note}</span>`;
+      const link = it.url ? `<a href="${it.url}" target="_blank" rel="noopener">${it.name} ↗</a>` : `<span>${it.name}</span>`;
+      const webLink = it.weburl ? ` <a href="${it.weburl}" target="_blank" rel="noopener" style="margin-left:8px;font-size:12.5px;color:var(--muted);">(committee page ↗)</a>` : '';
+      return `<div class="doclink"><span>${link}${webLink}</span>${pill}</div>`;
+    }).join('');
+    html += `
+      <div class="doc-pane${isOpen?' open':''}">
+        <div class="doc-pane-header" onclick="toggleDocPane(${i})">
+          <div class="htitle"><span class="chevron">&#9654;</span><span class="cat-name">${cat.title}</span></div>
+          <span class="count-pill">${items.length} document${items.length===1?'':'s'}</span>
+        </div>
+        <div class="doc-pane-body">${itemsHtml}</div>
+      </div>`;
+  });
+  wrap.innerHTML = anyMatch ? html : '<p style="color:var(--muted);">No matches.</p>';
+}
+
+// ---------- Contacts (real names/roles/emails from the framework) ----------
+const contactGroups = [
+  {title:"Secretariat & Leadership", people:[
+    {name:"H.E. Hailemariam Dessalegn Boshe", role:"CGIAR Board Chair (contact via Board Secretariat)", email:"cgiar-board-secretariat@cgiar.org"},
+    {name:"Board Secretariat", role:"General Board Secretariat mailbox", email:"cgiar-board-secretariat@cgiar.org"},
+    {name:"Council Secretariat", role:"General Council Secretariat mailbox", email:"cgiar-council-secretariat@cgiar.org"},
+    {name:"Ismahane Elouafi", role:"Executive Managing Director (EMD)", email:"EMD@cgiar.org"},
+    {name:"Sandra Milach", role:"Chief Scientist", email:"Chief-Scientist@cgiar.org"},
+    {name:"Micheline Ayoub", role:"Chief of Staff", email:"m.ayoub@cgiar.org"},
+    {name:"Luis Felipe Mendes", role:"Director, Business Operations & Finance", email:"l.f.mendes@cgiar.org"},
+    {name:"Rebecca Williams", role:"Director, People and Culture", email:"r.williams@cgiar.org"},
+    {name:"Andre Zandstra", role:"Director, Donor Relations & Business Development", email:"a.zandstra@cgiar.org"},
+    {name:"Georgios Solomos", role:"Integrated Partnership Risk and Internal Controls Executive", email:"G.Solomos@cgiar.org"},
+    {name:"Sylvia Oyinlola", role:"Council Secretary", email:"S.Oyinlola@cgiar.org"},
+    {name:"Christine Larson-Luhila", role:"Board / NomCo / AFRC Secretary", email:"C.Larson-Luhila@cgiar.org"},
+    {name:"AFRC Secretariat", role:"AFRC Secretariat mailbox", email:"AFRCSecretariat@cgiar.org"},
+    {name:"Monde Magolo", role:"Integrated Partnership Ethics and Business Conduct Executive", email:"M.Magolo@cgiar.org"},
+    {name:"Elbert Hidding", role:"Integrated Partnership Internal Audit Executive", email:"E.Hidding@cgiar.org"},
+  ]},
+  {title:"Committee Chairs", people:[
+    {name:"Richard Golding", role:"Interim AFRC Chair", email:"R.Golding@cgiar.org"},
+    {name:"Tareq Al Zabet", role:"NomCo Chair", email:"Z.Tareq@cgiar.org"},
+  ]},
+  {title:"Board Members", people:[
+    {name:"Tareq Al-Zabet", role:"Ex officio voting member (Center Board Chair - ICARDA)", email:"z.tareq@cgiar.org"},
+    {name:"Ramesh Chand", role:"Independent Board Member", email:"R.Chand@cgiar.org"},
+    {name:"Rachel Chikwamba", role:"Independent Board Member", email:"R.K.Chikwamba@cgiar.org"},
+    {name:"Fayezul Choudhury", role:"Ex officio voting member (Center Board Chair - IRRI)", email:"F.Choudhury@cgiar.org"},
+    {name:"Helen Hambly", role:"Ex officio voting member (Center Board Chair - CIP)", email:"helen.hambly@cgiar.org"},
+    {name:"Pascal Lamy", role:"Ex officio voting member (Center Board Chair - IFPRI)", email:"P.Lamy@cgiar.org"},
+    {name:"Mauricio Lopes", role:"Independent Board Member", email:"M.A.Lopes@cgiar.org"},
+    {name:"Julia Marton-Lefevre", role:"Ex officio voting member (Center Board Chair - Alliance of Bioversity & CIAT)", email:"J.Marton-Lefevre@cgiar.org"},
+    {name:"Alyssa Jade McDonald-Baertl", role:"Ex officio voting member (Center Board Chair - WorldFish)", email:"a.j.mcdonald-baertl@cgiar.org"},
+    {name:"Roel Merckx", role:"Ex officio voting member (Center Board Chair - IITA)", email:"r.merckx@cgiar.org"},
+    {name:"Matthew Morell", role:"Ex officio voting member (Center Board Chair - CIMMYT)", email:"M.MORELL@cgiar.org"},
+    {name:"Dhesigen Naidoo", role:"Independent Board Member", email:"D.Naidoo@cgiar.org"},
+    {name:"Henk Ovink", role:"Ex officio voting member (Center Board Chair - IWMI)", email:"H-ovink@cgiar.org"},
+    {name:"Andy Peters", role:"Ex officio voting member (Center Board Chair - ILRI)", email:"a.r.peters@cgiar.org"},
+    {name:"Cathy Reade", role:"Ex officio voting member (Center Board Chair - ICRISAT)", email:"C.Reade@cgiar.org"},
+    {name:"Emmanuel Sackey", role:"Ex officio voting member (Center Board Chair - AfricaRice)", email:"S.Emmanuel@cgiar.org"},
+  ]},
+  {title:"Mailing Lists", people:[
+    {name:"Board Voting Members (Ex officio & Independents)", role:"Mailing list", email:"cgiarboard-voting-members@groups.cgiar.org"},
+    {name:"Board Members (incl. EMD, AFRC Chair, Board Secretary)", role:"Mailing list", email:"cgiarboard-members@groups.cgiar.org"},
+    {name:"Board Nominations Committee Members", role:"Mailing list", email:"cgiarboard-nominations-committee@groups.cgiar.org"},
+    {name:"AFRC Members", role:"Mailing list", email:"AFRCmembers@groups.cgiar.org"},
+    {name:"Council Members and Alternates (Voting + Non-voting)", role:"Mailing list", email:"scmembers@groups.cgiar.org"},
+    {name:"Council Voting Members and Alternates", role:"Mailing list", email:"SystemCouncil-Voting-Members@groups.cgiar.org"},
+    {name:"Council Non-Voting Members and Alternates", role:"Mailing list", email:"SystemCouncil-exofficio-nonvoting@groups.cgiar.org"},
+    {name:"Council Observers & Guests", role:"Mailing list", email:"scobservers@groups.cgiar.org"},
+    {name:"AOC Members and Secretary", role:"Mailing list", email:"AOCmembers@groups.cgiar.org"},
+    {name:"SIMEC Members", role:"Mailing list", email:"sc-simec@groups.cgiar.org"},
+  ]},
+];
+
+// tracks which contact group panes the user has manually expanded
+let dirPaneOpen = new Array(contactGroups.length).fill(false);
+
+function toggleDirPane(i){
+  dirPaneOpen[i] = !dirPaneOpen[i];
+  renderDirectory();
+}
+
+function renderDirectory(){
+  const q = document.getElementById('dir-search').value.toLowerCase();
+  const wrap = document.getElementById('dir-groups');
+  let html = '';
+  let anyMatch = false;
+  contactGroups.forEach((g,i)=>{
+    const people = g.people.filter(p => (p.name+p.role+p.email).toLowerCase().includes(q));
+    if(q && !people.length) return; // hide groups with zero matches while searching
+    anyMatch = true;
+    const isOpen = dirPaneOpen[i] || (q.length>0); // auto-expand matching panes while searching
+    const peopleHtml = people.map(p=>`
+      <div class="person-card">
+        <div class="avatar">${p.name.split(' ').map(w=>w[0]).slice(-2).join('')}</div>
+        <h4>${p.name}</h4>
+        <div class="role">${p.role}</div>
+        <div class="em">${p.email}</div>
+      </div>`).join('');
+    html += `
+      <div class="doc-pane${isOpen?' open':''}">
+        <div class="doc-pane-header" onclick="toggleDirPane(${i})">
+          <div class="htitle"><span class="chevron">&#9654;</span><span class="cat-name">${g.title}</span></div>
+          <span class="count-pill">${people.length} contact${people.length===1?'':'s'}</span>
+        </div>
+        <div class="doc-pane-body"><div class="dir-grid" style="padding-top:10px;">${peopleHtml}</div></div>
+      </div>`;
+  });
+  wrap.innerHTML = anyMatch ? html : '<p style="color:var(--muted);">No matches.</p>';
+}
+
+// ---------- Live agent swap ----------
+let webChatStore = null; // set once Web Chat is rendered; askSample() checks this
+let liveConnectionType = null; // 'sdk' | 'iframe' | null — tells askSample() how to route clicks
+
+async function initAskAI(){
+  if(!TOKEN_ENDPOINT_URL){
+    if(IFRAME_EMBED_URL) initAskAIIframeFallback();
+    return; // otherwise stay on mock chat
+  }
+  const notice = document.getElementById('ask-notice');
+  notice.innerHTML = 'Connecting to your live Copilot Studio agent…';
+  try{
+    if(!window.WebChat) throw new Error('Web Chat SDK did not load (check your internet connection)');
+
+    const res = await fetch(TOKEN_ENDPOINT_URL);
+    if(!res.ok) throw new Error('Token endpoint returned HTTP ' + res.status);
+    const data = await res.json();
+    const token = data.token;
+    if(!token) throw new Error('No token in the response — double-check this is the "Tokens endpoint" URL, not the iframe/test URL');
+
+    document.getElementById('chat-shell').outerHTML =
+      '<div id="webchat" role="main" style="height:520px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--border);"></div>';
+
+    const directLine = window.WebChat.createDirectLine({ token });
+    webChatStore = window.WebChat.createStore();
+    window.WebChat.renderWebChat(
+      { directLine, store: webChatStore, styleOptions: cgiarWebChatStyleOptions },
+      document.getElementById('webchat')
+    );
+
+    liveConnectionType = 'sdk';
+    notice.innerHTML = '<span class="live-dot"></span>Connected to your live Copilot Studio agent, styled to match this site. The suggested questions above now send directly into the real conversation.';
+  } catch(err){
+    notice.innerHTML = 'Could not connect via the token endpoint (' + err.message + '). Falling back to the iframe embed instead.';
+    if(IFRAME_EMBED_URL) initAskAIIframeFallback();
+    return;
+  }
+}
+
+// Fallback: plain iframe embed. Gets the real agent connected. Microsoft's default bubble/color
+// styling INSIDE the iframe can't be overridden from this page (needs the token endpoint above
+// instead — see comments near IFRAME_EMBED_URL), but we wrap it in our own branded header/frame
+// so the container around it still feels like part of this site.
+function initAskAIIframeFallback(){
+  const notice = document.getElementById('ask-notice');
+  const shell = document.getElementById('chat-shell');
+  if(!shell) return; // already swapped (e.g. token endpoint attempt already replaced it)
+  liveConnectionType = 'iframe';
+  notice.innerHTML = '<span class="live-dot"></span>Connected to your live Copilot Studio agent below. Click a suggested question above to copy it, then paste it into the agent below.';
+  shell.outerHTML = `
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card);">
+      <div class="chat-header">
+        <span class="dot"></span> CGIAR Governance Companion &mdash; live agent
+      </div>
+      <iframe src="${IFRAME_EMBED_URL}" style="width:100%;height:520px;border:none;display:block;"></iframe>
+    </div>`;
+}
+
+// ---------- Init ----------
+renderDashboard();
+renderRoleUI(); // shows role-gate if no role saved yet, else renders the walkthrough steps
+renderDocs();
+renderDirectory();
+initAskAI();
+updateFabVisibility('dashboard');
+
+// External links (Diligent Platform page, Document Index, walkthrough "Related documents", etc.)
+// are added dynamically in a lot of places, so this uses one delegated listener on the document
+// rather than binding to each link individually. Some browser/security contexts (e.g. viewing this
+// file locally rather than over https, certain extensions, or a sandboxed preview) can silently
+// swallow a plain target="_blank" click while still allowing "open link in new tab" from the right-
+// click menu — explicitly calling window.open() inside the click handler is the reliable fix, since
+// it fires within the same user-gesture the browser already trusts.
+document.addEventListener('click', function(e){
+  const a = e.target.closest('a[target="_blank"]');
+  if(!a) return;
+  const href = a.getAttribute('href');
+  if(!href || href === '#') return;
+  e.preventDefault();
+  window.open(href, '_blank', 'noopener,noreferrer');
+});
+
+// ---------- PWA: register service worker ----------
+// serviceWorker registration silently requires a secure context (https, or localhost during
+// dev) — it will simply be undefined and skipped here when this file is opened directly
+// (file://) or served over plain http, rather than throwing. Install prompts / "Add to Home
+// Screen" only appear once this is actually hosted over https.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+      console.log('Service worker registration skipped:', err.message);
+    });
+  });
+}
+</script>
+</body>
+</html>

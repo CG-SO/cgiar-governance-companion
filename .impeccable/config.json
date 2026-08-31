@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-08-31T15:08:54.534Z",
+        "reason": "Agent: intentional body font for the embedded chat, matching the governance PPT template referenced in the source"
+      }
+    ]
+  }
+}
